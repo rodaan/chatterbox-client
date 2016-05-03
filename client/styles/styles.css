@@ -7,6 +7,7 @@ body {
     text-align: center;
     padding: 0 25px;
     font-family: arial, sans-serif;
+    color: #2B2B2B;
 }
 
 #main, #chats {
@@ -110,7 +111,9 @@ a {
 }
 .username {
     font-weight: bold;
+    color: #DE1B1B;
 }
 .friend {
     font-weight: bold;
+    background-color: #E9E581
 }

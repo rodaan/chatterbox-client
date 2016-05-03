@@ -96,8 +96,8 @@ var app = {
       var text = $('<div class="text"></div>');
       text.text(messages[key].text);
       if (app.friends.indexOf(messages[key].username) !== -1) {
-        text.addClass('friend');
-        username.addClass('friend');
+        message.addClass('friend');
+        //username.addClass('friend');
       } 
       a.append(username);
       message.append(a);
