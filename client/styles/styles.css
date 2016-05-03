@@ -87,4 +87,7 @@ form input[type=text] {
     color: #fff;
     background-color: #0090da;
 }
-
+.message {
+    background-color: #eee;
+    margin: 5px;
+}
