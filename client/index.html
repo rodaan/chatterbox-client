@@ -16,10 +16,15 @@
   <body>
     <div id="main">
       <h1>chatterbox</h1>
-      <select id="roomSelect" onChange="addRoom(this)">
-        <option value="newRoom">New Room...</option>
+      <select id="roomSelect" onChange="
+      app.populateChat(this.value)">
+      <option value="newRoom">New Room...</option>
       </select>
-      
+      <button type="button" onclick="app.clearMessages()">Clear messages</button> 
+      <br><br>
+
+      <input type="text" class="input" name="input">
+      <button type="submit" class="sendMsg" onclick="app.createMessage()">Send</button>
     </div>
     <div id="chats"></div>
   </body>
