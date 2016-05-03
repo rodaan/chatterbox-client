@@ -1,9 +1,13 @@
 var app = {
   init: () => {
+    app.fetch();
   },
   server: 'https://api.parse.com/1/classes/messages',
   // Keeps all the messages
   storage: {},
+  msgIds: [],
+  friends: [],
+  // Sends messages
   send: message => {
     console.log(message);
     var result = $.ajax({
@@ -22,6 +26,7 @@ var app = {
       }
     });
   },
+  // Fetches messages
   fetch: () => {
     $.ajax({
       // This is the url you should use to communicate with the parse API server.
@@ -30,22 +35,25 @@ var app = {
       contentType: 'application/json',
       success: (data) => {
         console.log('chatterbox: Message received');
-        //app.storage = data.results;
+        var messages = data.results;
 
         //Sorts all messages into chat rooms
-        for (var i = 0; i < data.results.length; i++) {
-          if (app.storage[data.results[i].roomname] === undefined) {
-            app.storage[data.results[i].roomname] = [data.results[i]];
-            // $('#roomSelect').append('<option value='+data.results[i].roomname + '>' + data.results[i].roomname + '</option>');
-          } else {
-            app.storage[data.results[i].roomname].push(data.results[i]);
+        for (var i = 0; i < messages.length; i++) {
+          if (app.storage[messages[i].roomname] === undefined) {
+            app.storage[messages[i].roomname] = {};
+            var option = $('<option></option>');
+            option.val(messages[i].roomname);
+            option.text(messages[i].roomname);
+            $('#roomSelect').append(option);
+            //$('#roomSelect').prepend('<option value='+messages[i].roomname+ '>' + messages[i].roomname + '</option>');
           }
+          app.storage[messages[i].roomname][messages[i].objectId] = messages[i];
         }
 
         //Creates chatroom options on roomselect
-        for (var key in app.storage) {
-          $('#roomSelect').append('<option value='+key+ '>' + key + '</option>');
-        }
+        // for (var key in app.storage) {
+        //   $('#roomSelect').append('<option value='+key+ '>' + key + '</option>');
+        // }
 
       },
       error: (data) => {
@@ -54,55 +62,98 @@ var app = {
       }
     });
   },
+  //Removes messages from screen
   clearMessages: () => {
     $('#chats').children().remove();
   },
+  //Adds a message on screen
   addMessage: message => {
+    console.log(message);
     app.send(message);
-    app.clearMessages();
-    app.fetch();
-    app.populateChat($('#roomSelect').val());
+    var box = $('<div class="message"></div>');
+    var a = $('<a href="#"></a>');
+    var username = $('<div class="username" onclick="app.usernameClick(this)">');
+    username.attr('data-username', message.username);
+    username.text(message.username);
+    var text = $('<div class="text"></div>');
+    text.text(message.text);
+    a.append(username);
+    box.append(a);
+    box.append(text);
+    $('#chats').prepend(box);
+    //$('#chats').prepend('<div class= "message"><a href="#"><div class="username">' + message.username + ':</div></a><div class="text">' + message.text + '</div></div>');  
   },
-  populateChat: room =>{
-    app.clearMessages();
-    app.fetch();
+  //Adds all messages with the room on screen
+  populateChat: room => {
     var messages = app.storage[room];
-    console.log(messages);
-    for (var i = 0; i < messages.length; i++) {
-      $('#chats').append('<div class= "message"><div class="username">' + messages[i].username + ':</div><div class="text">' + messages[i].text + '</div></div>');  
+    for (var key in messages) {
+      var message = $('<div class="message"></div>');
+      message.attr('id', messages[key].objectId);
+      var a = $('<a href="#"></a>');
+      var username = $('<div class="username" onclick="app.usernameClick(this)"></div>');
+      username.attr('data-username', messages[key].username);
+      username.text( messages[key].username + ':');
+      var text = $('<div class="text"></div>');
+      text.text(messages[key].text);
+      if (app.friends.indexOf(messages[key].username) !== -1) {
+        text.addClass('friend');
+        username.addClass('friend');
+      } 
+      a.append(username);
+      message.append(a);
+      message.append(text);
+      $('#chats').prepend(message);
+
+      // $('#chats').prepend('<div class= "message" id='+ messages[key].objectId +'><a href="#"><div class="username">' + messages[key].username + ':</div></a><div class="text">' + messages[key].text + '</div></div>');  
     }
   },
+  //On room change, clears messages 
+  roomChange: () => {
+    app.clearMessages();
+    var selection = $('#roomSelect').val();
+    if (selection === 'newRoom') {
+      $('#newRoomInput').show();
+    } else {
+      $('#newRoomInput').hide();
+      app.populateChat(selection);
+    }
+  },
+  //Adds a new room
   addRoom: room => {
-    //if(_.contains($('#roomSelect').children(), room) === false){
-    $('#roomSelect').append('<option value=' + room + '>' + room + '</option>');
-    //}
+    var option = $('<option></option>');
+    option.val(room);
+    option.text(room);
+    $('#roomSelect').append(option);
   },
   addFriend: name => {
-    return true;
+    app.friends.push(name);
   },
-  createMessage: () =>{
+  //Determines if a message was added to a new room, if so, creates new room and adds message on screen
+  handleSubmit: () => {
+    var roomname;
+    if ($('#roomSelect').val() === 'newRoom') {
+      roomname = $('#newRoomInput').val();
+      $('#newRoomInput').val('');
+      app.addRoom(roomname);
+    } else {
+      roomname = $('#roomSelect').val();
+    }
     var message = {
-      username: 'woot',
+      username: $('#username').val(),
       text: $('.input').val(),
-      roomname: $('#roomSelect').val()
+      roomname: roomname
     };
     $('.input').val('');
     app.addMessage(message);
+  },
+  usernameClick: (arg) => {
+    var username = arg.getAttribute('data-username');
+    if (app.friends.indexOf(username) === -1) {
+      app.addFriend(username);
+    }
+    app.roomChange();
   }
 };
-
-$(document).ready(function() {
-  app.fetch();
-  for (var key in app.storage) {
-    for (var i = 0; i < app.storage[key]; i++) {
-      $('#chats').append('<div class= "message"><div class="username">' + app.storage[key][i].username + '</div><div class="text">' + app.storage[key][i].text + '</div></div>');  
-    }
-  }
-
-  $('chatSubmit').submit();
+$(document).ready(function(){
+  app.init();
 });
-
-// setInterval(function(){
-//   app.fetch();
-//   app.addMessage();
-// }, 5000)
