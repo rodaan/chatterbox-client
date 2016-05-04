@@ -27,19 +27,22 @@ var app = {
     });
   },
   // Fetches messages
-  fetch: () => {
+  fetch: search => {
+    search = search || {};
     $.ajax({
       // This is the url you should use to communicate with the parse API server.
       url: app.server,
       type: 'GET',
       contentType: 'application/json',
+      data: search,
       success: (data) => {
         console.log('chatterbox: Message received');
+        console.log('Data is:', data);
         var messages = data.results;
 
         //Sorts all messages into chat rooms
         for (var i = 0; i < messages.length; i++) {
-          if (app.storage[messages[i].roomname] === undefined) {
+          if (app.storage[messages[i].roomname] === undefined && messages[i].roomname !== undefined) {
             app.storage[messages[i].roomname] = {};
             var option = $('<option></option>');
             option.val(messages[i].roomname);
@@ -85,6 +88,7 @@ var app = {
   },
   //Adds all messages with the room on screen
   populateChat: room => {
+    app.fetch('where= {"roomname": "' + room + '"}');
     var messages = app.storage[room];
     for (var key in messages) {
       var message = $('<div class="message"></div>');
